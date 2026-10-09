@@ -1,0 +1,51 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install Firebase SDK",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"install",
+				"firebase"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install Expo Google auth package",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"expo",
+				"install",
+				"expo-auth-session",
+				"expo-crypto"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "MeetHub TypeScript check",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"tsc",
+				"--noEmit"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "MeetHub Expo lint",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"expo",
+				"lint"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
