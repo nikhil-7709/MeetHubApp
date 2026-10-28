@@ -26,7 +26,7 @@ function makeMeetingId() {
 }
 
 export async function createMeeting(input: NewMeeting, status: Meeting['status'] = 'scheduled') {
-  const { db } = getFirebase();
+  const { db } = await getFirebase();
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const meetingId = makeMeetingId();
     const ref = doc(db, 'meetings', meetingId);
@@ -50,7 +50,7 @@ export async function createMeeting(input: NewMeeting, status: Meeting['status']
 }
 
 export async function getMeeting(meetingId: string): Promise<Meeting | null> {
-  const { db } = getFirebase();
+  const { db } = await getFirebase();
   const id = meetingId.trim().toUpperCase();
   if (!/^MH-[A-Z0-9]{4}-[A-Z0-9]{3}$/.test(id)) return null;
   const snapshot = await getDoc(doc(db, 'meetings', id));
@@ -58,7 +58,7 @@ export async function getMeeting(meetingId: string): Promise<Meeting | null> {
 }
 
 export async function joinMeeting(meetingId: string, userId: string) {
-  const { db } = getFirebase();
+  const { db } = await getFirebase();
   const ref = doc(db, 'meetings', meetingId.trim().toUpperCase());
   await runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(ref);
@@ -78,17 +78,29 @@ export function subscribeToMyMeetings(
   callback: (meetings: Meeting[]) => void,
   onError: (error: Error) => void,
 ): Unsubscribe {
-  const { db } = getFirebase();
-  const meetingsQuery = query(collection(db, 'meetings'), where('participants', 'array-contains', userId));
-  return onSnapshot(
-    meetingsQuery,
-    (snapshot) => callback(snapshot.docs.map((item) => item.data() as Meeting)),
-    onError,
-  );
+  // Firebase subscribeToMyMeetings must be synchronous (returns Unsubscribe),
+  // so we set up the snapshot listener after resolving the async getFirebase().
+  let unsubscribe: Unsubscribe | undefined;
+
+  getFirebase()
+    .then(({ db }) => {
+      const meetingsQuery = query(
+        collection(db, 'meetings'),
+        where('participants', 'array-contains', userId),
+      );
+      unsubscribe = onSnapshot(
+        meetingsQuery,
+        (snapshot) => callback(snapshot.docs.map((item) => item.data() as Meeting)),
+        onError,
+      );
+    })
+    .catch((err: Error) => onError(err));
+
+  return () => unsubscribe?.();
 }
 
 export async function endMeeting(meetingId: string) {
-  const { db } = getFirebase();
+  const { db } = await getFirebase();
   const ref = doc(db, 'meetings', meetingId);
   await runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(ref);
@@ -103,7 +115,7 @@ export async function endMeeting(meetingId: string) {
 }
 
 export async function removeParticipant(meetingId: string, hostId: string, participantId: string) {
-  const { db } = getFirebase();
+  const { db } = await getFirebase();
   const ref = doc(db, 'meetings', meetingId);
   await runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(ref);

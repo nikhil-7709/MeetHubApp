@@ -5,9 +5,14 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { ThemeProvider, useAppTheme } from '../src/context/ThemeContext';
-
 export default function RootLayout() {
-  return <ThemeProvider><AuthProvider><AppNavigator /></AuthProvider></ThemeProvider>;
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }
 
 function AppNavigator() {
@@ -18,10 +23,20 @@ function AppNavigator() {
 
   useEffect(() => {
     if (loading) return;
-    const atAuth = segments[0] === '(auth)';
-    if (!user && !atAuth && segments[0] !== 'index') {
-      router.replace('/(auth)/login');
-    } else if (user && atAuth) {
+    const segs = segments as string[];
+    const isAuthRoute =
+      segs.includes('(auth)') ||
+      segs.includes('login') ||
+      segs.includes('register') ||
+      segs.includes('welcome') ||
+      segs[0] === 'login' ||
+      segs[0] === 'register' ||
+      segs[0] === 'welcome';
+    const isMeetingRoute = segs.includes('meeting') || segs[0] === 'meeting';
+
+    if (!user && !isAuthRoute && segs[0] !== 'index' && !isMeetingRoute) {
+      router.replace('/(auth)/welcome');
+    } else if (user && isAuthRoute) {
       router.replace('/(tabs)');
     }
   }, [loading, router, segments, user]);
@@ -40,3 +55,4 @@ function AppNavigator() {
     </NavigationThemeProvider>
   );
 }
+

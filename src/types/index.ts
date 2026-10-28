@@ -1,11 +1,9 @@
-import type { Timestamp } from 'firebase/firestore';
-
 export interface UserProfile {
   userId: string;
   name: string;
   email: string;
   profileImage: string;
-  createdAt: number | Timestamp;
+  createdAt: number | string;
 }
 
 export type MeetingStatus = 'scheduled' | 'active' | 'ended';
@@ -33,7 +31,7 @@ export interface MeetingMessage {
   senderId: string;
   senderName: string;
   message: string;
-  timestamp: number | Timestamp;
+  timestamp: number | string;
 }
 
 export interface RoomParticipant {

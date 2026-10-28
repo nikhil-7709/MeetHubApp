@@ -1,6 +1,6 @@
 import React from 'react';
-import { MeetingFormScreen } from '../src/screens/MeetingFormScreen';
+import { MeetingSetupScreen } from '../src/screens/MeetingSetupScreen';
 
-export default function CreateMeetingScreen() {
-  return <MeetingFormScreen startNow />;
+export default function CreateMeetingRoute() {
+  return <MeetingSetupScreen initialMode="create" />;
 }

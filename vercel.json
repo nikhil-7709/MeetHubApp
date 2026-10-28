@@ -1,0 +1,36 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "expo export -p web",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/welcome",
+      "destination": "/welcome.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/register",
+      "destination": "/register.html"
+    },
+    {
+      "source": "/meetings",
+      "destination": "/meetings.html"
+    },
+    {
+      "source": "/meeting/:meetingId/chat",
+      "destination": "/meeting/[meetingId]/chat.html"
+    },
+    {
+      "source": "/meeting/:meetingId",
+      "destination": "/meeting/[meetingId].html"
+    },
+    {
+      "source": "/((?!_expo|assets|favicon.ico|welcome|login|register|meetings).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -15,6 +15,12 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://peyressohpsbazcznmhn.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_RIpKv9XwS9t5VnnprZYNIw_z06pgh10",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_RIpKv9XwS9t5VnnprZYNIw_z06pgh10",
+        "EXPO_PUBLIC_APP_URL": "https://meethubapp.vercel.app"
       }
     },
     "production": {

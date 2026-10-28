@@ -20,6 +20,7 @@ expo-env.d.ts
 
 # Metro
 .metro-health-check*
+cloudflared.exe
 
 # debug
 npm-debug.*
@@ -47,3 +48,6 @@ app-example
 # generated native folders
 /ios
 /android
+
+.vercel
+.env*

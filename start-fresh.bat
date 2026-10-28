@@ -1,0 +1,3 @@
+@echo off
+echo Clearing Expo cache and starting...
+npx expo start --clear

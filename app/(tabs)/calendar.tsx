@@ -6,7 +6,7 @@ import { MeetingCard } from '../../src/components/MeetingCard';
 import { Screen } from '../../src/components/Screen';
 import { useAuth } from '../../src/context/AuthContext';
 import { useAppTheme } from '../../src/context/ThemeContext';
-import { subscribeToMyMeetings } from '../../src/services/meetingService';
+import { subscribeToMyMeetings } from '../../src/services/meetingServiceUnified';
 import type { Meeting } from '../../src/types';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -34,7 +34,7 @@ export default function CalendarScreen() {
   const moveMonth = (step: number) => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + step, 1));
   return (
     <Screen>
-      <View style={styles.heading}><View><Text style={[styles.title, { color: colors.text }]}>Calendar</Text><Text style={[styles.subtitle, { color: colors.muted }]}>See what's coming up.</Text></View><Pressable style={[styles.add, { backgroundColor: colors.primary }]} onPress={() => router.push('/schedule')}><MaterialCommunityIcons name="plus" size={22} color="white" /></Pressable></View>
+      <View style={styles.heading}><View><Text style={[styles.title, { color: colors.text }]}>Calendar</Text><Text style={[styles.subtitle, { color: colors.muted }]}>{"See what's coming up."}</Text></View><Pressable style={[styles.add, { backgroundColor: colors.primary }]} onPress={() => router.push('/schedule')}><MaterialCommunityIcons name="plus" size={22} color="white" /></Pressable></View>
       <View style={[styles.calendar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <View style={styles.monthHead}><Pressable onPress={() => moveMonth(-1)}><MaterialCommunityIcons name="chevron-left" size={27} color={colors.text} /></Pressable><Text style={[styles.monthText, { color: colors.text }]}>{month.toLocaleDateString([], { month: 'long', year: 'numeric' })}</Text><Pressable onPress={() => moveMonth(1)}><MaterialCommunityIcons name="chevron-right" size={27} color={colors.text} /></Pressable></View>
         <View style={styles.grid}>{WEEKDAYS.map((day, index) => <Text key={`${day}-${index}`} style={[styles.weekday, { color: colors.muted }]}>{day}</Text>)}</View>

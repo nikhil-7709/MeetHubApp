@@ -10,14 +10,49 @@ import {
   type User,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { getFirebase } from '../firebase/config';
+import { isFirebaseConfigured } from '../firebase/config';
+import { isSupabaseConfigured } from '../supabase/config';
+import {
+  loginWithSupabase,
+  logoutSupabase,
+  observeSupabaseAuth,
+  registerWithSupabase,
+  resendSupabaseConfirmation,
+  resetSupabasePassword,
+  updateSupabaseDisplayName,
+  type AppAuthUser,
+} from './supabaseAuthService';
 
-export function observeAuth(callback: (user: User | null) => void) {
-  return onAuthStateChanged(getFirebase().auth, callback);
+export function observeAuth(callback: (user: User | AppAuthUser | null) => void) {
+  if (isSupabaseConfigured()) {
+    let unsub: (() => void) | undefined;
+    observeSupabaseAuth((u) => callback(u)).then((fn) => {
+      unsub = fn;
+    });
+    return () => unsub?.();
+  }
+
+  if (isFirebaseConfigured()) {
+    // Dynamic import to prevent eager Firebase SDK loading
+    let unsubFb: (() => void) | undefined;
+    import('../firebase/config').then(({ getFirebase }) => {
+      getFirebase().then(({ auth }) => {
+        unsubFb = onAuthStateChanged(auth, callback as (u: User | null) => void);
+      });
+    });
+    return () => unsubFb?.();
+  }
+
+  return () => {};
 }
 
 export async function registerWithEmail(name: string, email: string, password: string) {
-  const { auth, db } = getFirebase();
+  if (isSupabaseConfigured()) {
+    const res = await registerWithSupabase(name, email, password);
+    return res.user;
+  }
+
+  const { auth, db } = await (await import('../firebase/config')).getFirebase();
   const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
   await updateProfile(credential.user, { displayName: name.trim() });
   await setDoc(doc(db, 'users', credential.user.uid), {
@@ -31,9 +66,12 @@ export async function registerWithEmail(name: string, email: string, password: s
 }
 
 export async function loginWithEmail(email: string, password: string) {
-  const { auth } = getFirebase();
+  if (isSupabaseConfigured()) {
+    return loginWithSupabase(email, password);
+  }
+
+  const { auth, db } = await (await import('../firebase/config')).getFirebase();
   const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
-  const { db } = getFirebase();
   const userRef = doc(db, 'users', credential.user.uid);
   const profile = await getDoc(userRef);
   if (!profile.exists()) {
@@ -49,7 +87,7 @@ export async function loginWithEmail(email: string, password: string) {
 }
 
 export async function loginWithGoogleIdToken(idToken: string) {
-  const { auth, db } = getFirebase();
+  const { auth, db } = await (await import('../firebase/config')).getFirebase();
   const credential = await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
   const userRef = doc(db, 'users', credential.user.uid);
   const current = await getDoc(userRef);
@@ -66,21 +104,38 @@ export async function loginWithGoogleIdToken(idToken: string) {
 }
 
 export async function sendPasswordReset(email: string) {
-  const { auth } = getFirebase();
+  if (isSupabaseConfigured()) {
+    return resetSupabasePassword(email.trim());
+  }
+  const { auth } = await (await import('../firebase/config')).getFirebase();
   return sendPasswordResetEmail(auth, email.trim());
 }
 
 export async function logout() {
-  const { auth } = getFirebase();
+  if (isSupabaseConfigured()) {
+    return logoutSupabase();
+  }
+  const { auth } = await (await import('../firebase/config')).getFirebase();
   return signOut(auth);
 }
 
-export async function updateDisplayName(user: User, name: string) {
-  const { db } = getFirebase();
-  await updateProfile(user, { displayName: name.trim() });
+export async function updateDisplayName(user: User | { uid: string }, name: string) {
+  if (isSupabaseConfigured()) {
+    return updateSupabaseDisplayName(name);
+  }
+  const { db } = await (await import('../firebase/config')).getFirebase();
+  await updateProfile(user as User, { displayName: name.trim() });
   await setDoc(
     doc(db, 'users', user.uid),
-    { userId: user.uid, name: name.trim(), email: user.email ?? '', profileImage: '' },
+    { userId: user.uid, name: name.trim(), email: (user as User).email ?? '', profileImage: '' },
     { merge: true },
   );
 }
+
+export async function resendConfirmationEmail(email: string) {
+  if (isSupabaseConfigured()) {
+    return resendSupabaseConfirmation(email);
+  }
+}
+
+

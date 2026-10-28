@@ -16,24 +16,33 @@ export function subscribeToMessages(
   callback: (messages: MeetingMessage[]) => void,
   onError: (error: Error) => void,
 ): Unsubscribe {
-  const { db } = getFirebase();
-  const messagesQuery = query(
-    collection(db, 'meetings', meetingId, 'messages'),
-    orderBy('timestamp', 'asc'),
-    limit(200),
-  );
-  return onSnapshot(
-    messagesQuery,
-    (snapshot) =>
-      callback(
-        snapshot.docs.map((item) => ({
-          ...(item.data() as Omit<MeetingMessage, 'messageId' | 'meetingId'>),
-          messageId: item.id,
-          meetingId,
-        })),
-      ),
-    onError,
-  );
+  // Firebase subscribeToMessages must be synchronous (returns Unsubscribe),
+  // so we resolve the async getFirebase() internally before attaching the listener.
+  let unsubscribe: Unsubscribe | undefined;
+
+  getFirebase()
+    .then(({ db }) => {
+      const messagesQuery = query(
+        collection(db, 'meetings', meetingId, 'messages'),
+        orderBy('timestamp', 'asc'),
+        limit(200),
+      );
+      unsubscribe = onSnapshot(
+        messagesQuery,
+        (snapshot) =>
+          callback(
+            snapshot.docs.map((item) => ({
+              ...(item.data() as Omit<MeetingMessage, 'messageId' | 'meetingId'>),
+              messageId: item.id,
+              meetingId,
+            })),
+          ),
+        onError,
+      );
+    })
+    .catch((err: Error) => onError(err));
+
+  return () => unsubscribe?.();
 }
 
 export async function sendMessage(
@@ -46,7 +55,7 @@ export async function sendMessage(
   if (!text || text.length > 2000) {
     throw new Error('Messages must be between 1 and 2,000 characters.');
   }
-  const { db } = getFirebase();
+  const { db } = await getFirebase();
   await addDoc(collection(db, 'meetings', meetingId, 'messages'), {
     meetingId,
     senderId,
